@@ -7,8 +7,8 @@ Open command prompt<br>
 Run this to install Juypter Notebook<br>
 python -m pip install jupyter<br>
 
-Run this command to install SPARQL Client for Python<br>
-pip install sparql-client<br>
+Run this in a Jupyter Notebook segment to install SPARQL Client for Python<br>
+!pip install sparql-client<br>
 
 Run Jupyter Notebook<br>
 Use the upload option to add the .ipynb file from the repository to edit in Jupyter<br>
