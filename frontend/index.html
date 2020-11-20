@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Project Info Here</title>
+    <link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css">
+  </head>
+  <body>
+    <style> 
+      body { margin: 0; }
+      #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+      #chart { position: absolute; right: 25px; top: 25px; max-width: 600px; max-height: 600px; z-index: 1000; }
+    </style>
+    <div id="map"></div>
+    <canvas id="chart"></canvas>
+    <script src="//unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src="//www.chartjs.org/dist/2.9.4/Chart.min.js"></script>
+    <script>
+
+      class Map { 
+
+        constructor(lat, long) { 
+          this.map = L.map('map').setView([lat, long], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(this.map);
+          this.markers = [];
+        }
+
+        addMarker(lat, long, msg) { 
+          var marker = L.marker([lat, long]).addTo(this.map);
+          var popup = marker.bindPopup(msg);
+          this.markers.push({ 
+            marker, popup,
+            lat, long, msg
+          })
+        }
+
+        // onMove listens to user map events (such as zoom, move, and resize), 
+        // then on an event will remove all markers and call the provided user
+        // function `f`
+        onMove(f) {
+          var handler = () => { 
+            for(let it of this.markers) { 
+              it.marker.remove(); 
+            }
+            f();
+          }
+          this.map.on('zoomend', handler);
+          this.map.on('moveend', handler);
+          this.map.on('resize', handler);
+        }
+
+      }
+
+      // PIE
+      class Pie { 
+
+        constructor() { 
+          this.ctx = document.getElementById('chart');
+        }
+
+        // draw will, given usage data from the api, draw a pie chart to the screen.
+        draw(data) { 
+          this.chart = new Chart(this.ctx, {
+            type: 'pie',
+            data: data, 
+            options: {
+              title: {
+                display: true,
+                text: 'Programming Language Usage In Current Area'
+              }
+            }
+          });
+        }
+
+        destroy() { 
+          this.chart.destroy();
+        }
+
+      }
+
+      class Api { 
+
+        // get is a fake method that returns static test data.
+        get() {
+          return {
+            markers: [
+              [46.731705, -116.999939, "business name"],
+            ],
+            usages: { 
+              labels: ['Go', 'Java', 'C++', 'C#', 'JavaScript', 'Python'],
+              datasets: [{
+                data: [12, 19, 3, 5, 2, 3],
+                backgroundColor: [
+                  'rgba(255, 99, 132, 0.2)',
+                  'rgba(54, 162, 235, 0.2)',
+                  'rgba(255, 206, 86, 0.2)',
+                  'rgba(75, 192, 192, 0.2)',
+                  'rgba(153, 102, 255, 0.2)',
+                  'rgba(255, 159, 64, 0.2)'
+                ]
+              }]
+            }
+          }
+        }
+
+      }
+
+      class App { 
+
+        constructor() { 
+          this.api = new Api();
+          this.map = new Map(46.731705, -116.999939);
+          this.pie = new Pie();
+        }
+
+        // listen does initialization, draws the first map, and begins 
+        // listening to user events (such as map movement).
+        listen() {
+          this.do();
+          this.map.onMove(data => { 
+            this.pie.destroy(); 
+            setTimeout(() => this.do(), 750);
+          });
+        }
+
+        // do will update all marker, the usage pie, after requesting data
+        // from the api.
+        do() { 
+          var data = this.api.get()
+          for (let [lat, long, name] of data.markers) { 
+            this.map.addMarker(lat, long, name);
+          }
+          this.pie.draw(data.usages);
+        }
+
+      }
+
+      // setup
+      var app = new App();
+      app.listen();
+
+    </script>
+  </body>
+</html>
