@@ -1,0 +1,12 @@
+[Unit]
+Description=Programming-Languages-DBPedia
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+User=evan
+ExecStart=make -C /home/evan/Programming-Languages-DBPedia/
+
+[Install]
+WantedBy=multi-user.target
