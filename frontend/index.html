@@ -20,8 +20,8 @@
 
       class Map { 
 
-        constructor(lat, long) { 
-          this.map = L.map('map').setView([lat, long], 15);
+        constructor(lat, long, zoom) { 
+          this.map = L.map('map').setView([lat, long], zoom);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           }).addTo(this.map);
@@ -92,7 +92,8 @@
       class Api { 
 
         constructor() { 
-          this.BASE_API = "//localhost:5000"
+          this.BASE_API = "//localhost:5000" // dev
+          // this.BASE_API = "//cs489-final.evanjon.es" // prod
           this.BUSINESS_API = this.BASE_API + "/businesses"
           this.PROGRAMMING_LANGUAGES_API = this.BASE_API + "/programming_languages"
         }
@@ -136,15 +137,19 @@
       class App { 
 
         constructor() { 
+          this.default_lat = 51.509865
+          this.default_lng = -0.118092
+          this.default_zoom = 10
+
           this.api = new Api();
-          this.map = new Map(46.731705, -116.999939); // Moscow, ID
+          this.map = new Map(this.default_lat, this.default_lng, this.default_zoom)
           this.pie = new Pie();
         }
 
         // listen does initialization, draws the first map, and begins 
         // listening to user events (such as map movement).
         listen() {
-          this.do(46.731705, -116.999939, 15); // Moscow, ID
+          this.do(this.default_lat, this.default_lng, this.default_zoom)
 
           this.map.onMoveStart(() => { 
             this.pie.destroy(); 
