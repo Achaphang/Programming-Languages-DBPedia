@@ -3,6 +3,7 @@
   <head>
     <title>Project Info Here</title>
     <link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css">
+    <link rel="icon" type="image/x-icon" href="//favicon.evanjon.es/255/0/0/32/favicon.ico" /> 
   </head>
   <body>
     <style> 
@@ -13,6 +14,7 @@
     <div id="map"></div>
     <canvas id="chart"></canvas>
     <script src="//unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src="//unpkg.com/lodash@4.17.20/lodash.min.js"></script>
     <script src="//www.chartjs.org/dist/2.9.4/Chart.min.js"></script>
     <script>
 
@@ -27,23 +29,31 @@
         }
 
         addMarker(lat, long, msg) { 
-          var marker = L.marker([lat, long]).addTo(this.map);
-          var popup = marker.bindPopup(msg);
+          let marker = L.marker([lat, long]).addTo(this.map);
+          let popup = marker.bindPopup(msg);
           this.markers.push({ 
             marker, popup,
             lat, long, msg
           })
         }
 
-        // onMove listens to user map events (such as zoom, move, and resize), 
+        // onMoveStart listens to user map events (such as zoom, move, and resize), 
         // then on an event will remove all markers and call the provided user
         // function `f`
-        onMove(f) {
-          var handler = () => { 
+        onMoveStart(f) {
+          let handler = () => { 
             for(let it of this.markers) { 
               it.marker.remove(); 
             }
-            f();
+            f(this.map._lastCenter.lat, this.map._lastCenter.lng, this.map._zoom)
+          }
+          this.map.on('zoomstart', handler);
+          this.map.on('movestart', handler);
+        }
+
+        onMoveEnd(f) {
+          let handler = () => { 
+            f(this.map._lastCenter.lat, this.map._lastCenter.lng, this.map._zoom)
           }
           this.map.on('zoomend', handler);
           this.map.on('moveend', handler);
@@ -81,27 +91,44 @@
 
       class Api { 
 
+        constructor() { 
+          this.BASE_API = "//localhost:5000"
+          this.BUSINESS_API = this.BASE_API + "/businesses"
+          this.PROGRAMMING_LANGUAGES_API = this.BASE_API + "/programming_languages"
+        }
+
         // get is a fake method that returns static test data.
-        get() {
+        async get(lat, lng, range) {
+          let businessesRequest = this.getBusinesses(lat, lng, range)
+          let programmingLanguagesRequest = this.getProgrammingLanguags(lat, lng, range)
           return {
-            markers: [
-              [46.731705, -116.999939, "business name"],
-            ],
-            usages: { 
-              labels: ['Go', 'Java', 'C++', 'C#', 'JavaScript', 'Python'],
-              datasets: [{
-                data: [12, 19, 3, 5, 2, 3],
-                backgroundColor: [
-                  'rgba(255, 99, 132, 0.2)',
-                  'rgba(54, 162, 235, 0.2)',
-                  'rgba(255, 206, 86, 0.2)',
-                  'rgba(75, 192, 192, 0.2)',
-                  'rgba(153, 102, 255, 0.2)',
-                  'rgba(255, 159, 64, 0.2)'
-                ]
-              }]
-            }
+            markers: await businessesRequest, 
+            usages: await programmingLanguagesRequest
           }
+        }
+
+        async getBusinesses(lat, lng, range) { 
+          let response = await fetch(this.BUSINESS_API, {
+            method: 'POST',
+            body: this.getPostBody(lat, lng, range)
+          });
+          return await response.json();
+        }
+
+        async getProgrammingLanguags(lat, lng, range) { 
+          let response = await fetch(this.PROGRAMMING_LANGUAGES_API, {
+            method: 'POST',
+            body: this.getPostBody(lat, lng, range)
+          });
+          return await response.json();
+        }
+
+        getPostBody(lat, lng, range) { 
+          let fd = new FormData();
+          fd.append("lat", lat)
+          fd.append("lng", lng)
+          fd.append("range", range)
+          return fd
         }
 
       }
@@ -110,24 +137,28 @@
 
         constructor() { 
           this.api = new Api();
-          this.map = new Map(46.731705, -116.999939);
+          this.map = new Map(46.731705, -116.999939); // Moscow, ID
           this.pie = new Pie();
         }
 
         // listen does initialization, draws the first map, and begins 
         // listening to user events (such as map movement).
         listen() {
-          this.do();
-          this.map.onMove(data => { 
+          this.do(46.731705, -116.999939, 15); // Moscow, ID
+
+          this.map.onMoveStart(() => { 
             this.pie.destroy(); 
-            setTimeout(() => this.do(), 750);
           });
+
+          this.map.onMoveEnd(_.debounce((lat, lng, zoom) => { 
+            this.do(lat, lng, zoom)
+          }, 500));
         }
 
         // do will update all marker, the usage pie, after requesting data
         // from the api.
-        do() { 
-          var data = this.api.get()
+        async do(lat, lng, zoom) { 
+          let data = await this.api.get(lat, lng, zoom)
           for (let [lat, long, name] of data.markers) { 
             this.map.addMarker(lat, long, name);
           }
@@ -137,7 +168,7 @@
       }
 
       // setup
-      var app = new App();
+      let app = new App();
       app.listen();
 
     </script>
