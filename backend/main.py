@@ -68,8 +68,6 @@ class PLQueries():
             limit 5
         """.format(lat=lat, lng=lng, range=range)
 
-        print(query)
-
         result = sparql.query(self.endpoint, query)
         rows = [sparql.unpack_row(row) for row in result]
 
