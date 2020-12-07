@@ -32,6 +32,7 @@ class PLQueries():
                 FILTER(?lat <= {lat} + {range})
 
                 FILTER(LANGMATCHES(LANG(?name), "en"))
+                FILTER(LANGMATCHES(LANG(?comment), "en"))
            }}
             order by ?dev
             limit 100
@@ -64,7 +65,6 @@ class PLQueries():
                 FILTER(?lat <= {lat} + {range})
 
                 FILTER(LANGMATCHES(LANG(?name), "en"))
-                FILTER(LANGMATCHES(LANG(?comment), "en"))
             }}
             order by desc(?count)
             limit 5
