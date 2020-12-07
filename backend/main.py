@@ -94,14 +94,15 @@ class PLQueries():
 app = PLQueries()
 server = Flask(__name__)
 
+f = open("./frontend/index.html", mode="r")
+indexHTML = f.read()
+f.close()
+
 # HTTP routes
 
 @server.route("/")
 def hello():
-    f = open("./frontend/index.html", mode="r")
-    contents = f.read()
-    f.close()
-    return contents
+    return indexHTML
 
 @server.route("/programming_languages", methods=['POST'])
 def programming_languages():
