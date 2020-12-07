@@ -1,6 +1,9 @@
 import sparql
 from flask import Flask, jsonify, request
 import os
+import math
+import random
+import colorsys
 
 # SPARQL getters.
 
@@ -73,14 +76,23 @@ class PLQueries():
         result = sparql.query(self.endpoint, query)
         rows = [sparql.unpack_row(row) for row in result]
 
-        # Five unique colors.
-        colors = [
-                "rgba(209,17,65,0.2)",
-                "rgba(0,177,89,0.2)",
-                "rgba(0,174,219,0.2)",
-                "rgba(243,119,53,0.2)",
-                "rgba(255,196,37,0.2)",
-        ]
+        def generateHSLAtoRGBAColors(saturation, lightness, alpha, amount):
+          colors = []
+          huedelta = math.trunc(360 / amount)
+
+          for i in range(amount):
+            hue = i * huedelta
+            decConversion = colorsys.hsv_to_rgb(hue/360, saturation/100, lightness/100)
+            rgbastring = "rgba("
+            for j in range(3):
+                rgbastring += str(round(decConversion[j] * 255)) + ","
+            rgbastring += str(alpha) + ")"
+            colors.append(rgbastring)
+
+          return colors
+
+        colors = generateHSLAtoRGBAColors(random.randint(20, 80) + (random.randint(0, 999) * 0.001), random.randint(20, 80) + (random.randint(0, 999) * 0.001), 1.0, 5)
+        random.shuffle(colors)
 
         # Format data in special way for frontend.
         return {
