@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Project Info Here</title>
+    <title>SWOP 2020 Assignment 4</title>
     <link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css">
-    <link rel="icon" type="image/x-icon" href="//favicon.evanjon.es/255/0/0/32/favicon.ico" /> 
+    <link rel="icon" type="image/x-icon" href="//favicon.evanjon.es/255/0/0/32/favicon.ico" />
   </head>
   <body>
-    <style> 
+    <style>
       body { margin: 0; }
       #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
       #chart { position: absolute; right: 25px; top: 25px; max-width: 600px; max-height: 600px; z-index: 1000; }
@@ -18,32 +18,32 @@
     <script src="//www.chartjs.org/dist/2.9.4/Chart.min.js"></script>
     <script>
 
-      class Map { 
+      class Map {
 
-        constructor(lat, long, zoom) { 
+        constructor(lat, long, zoom) {
           this.map = L.map('map').setView([lat, long], zoom);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           }).addTo(this.map);
           this.markers = [];
         }
 
-        addMarker(lat, long, msg) { 
+        addMarker(lat, long, msg) {
           let marker = L.marker([lat, long]).addTo(this.map);
           let popup = marker.bindPopup(msg);
-          this.markers.push({ 
+          this.markers.push({
             marker, popup,
             lat, long, msg
           })
         }
 
-        // onMoveStart listens to user map events (such as zoom, move, and resize), 
+        // onMoveStart listens to user map events (such as zoom, move, and resize),
         // then on an event will remove all markers and call the provided user
         // function `f`
         onMoveStart(f) {
-          let handler = () => { 
-            for(let it of this.markers) { 
-              it.marker.remove(); 
+          let handler = () => {
+            for(let it of this.markers) {
+              it.marker.remove();
             }
             f(this.map._lastCenter.lat, this.map._lastCenter.lng, this.map._zoom)
           }
@@ -52,7 +52,7 @@
         }
 
         onMoveEnd(f) {
-          let handler = () => { 
+          let handler = () => {
             f(this.map._lastCenter.lat, this.map._lastCenter.lng, this.map._zoom)
           }
           this.map.on('zoomend', handler);
@@ -63,17 +63,17 @@
       }
 
       // PIE
-      class Pie { 
+      class Pie {
 
-        constructor() { 
+        constructor() {
           this.ctx = document.getElementById('chart');
         }
 
         // draw will, given usage data from the api, draw a pie chart to the screen.
-        draw(data) { 
+        draw(data) {
           this.chart = new Chart(this.ctx, {
             type: 'pie',
-            data: data, 
+            data: data,
             options: {
               title: {
                 display: true,
@@ -83,13 +83,13 @@
           });
         }
 
-        destroy() { 
+        destroy() {
           this.chart.destroy();
         }
 
       }
 
-      class Api { 
+      class Api {
 
         constructor() { 
           // this.BASE_API = "//localhost:5000" // dev
@@ -103,12 +103,12 @@
           let businessesRequest = this.getBusinesses(lat, lng, range)
           let programmingLanguagesRequest = this.getProgrammingLanguags(lat, lng, range)
           return {
-            markers: await businessesRequest, 
+            markers: await businessesRequest,
             usages: await programmingLanguagesRequest
           }
         }
 
-        async getBusinesses(lat, lng, range) { 
+        async getBusinesses(lat, lng, range) {
           let response = await fetch(this.BUSINESS_API, {
             method: 'POST',
             body: this.getPostBody(lat, lng, range)
@@ -116,7 +116,7 @@
           return await response.json();
         }
 
-        async getProgrammingLanguags(lat, lng, range) { 
+        async getProgrammingLanguags(lat, lng, range) {
           let response = await fetch(this.PROGRAMMING_LANGUAGES_API, {
             method: 'POST',
             body: this.getPostBody(lat, lng, range)
@@ -124,7 +124,7 @@
           return await response.json();
         }
 
-        getPostBody(lat, lng, range) { 
+        getPostBody(lat, lng, range) {
           let fd = new FormData();
           fd.append("lat", lat)
           fd.append("lng", lng)
@@ -134,9 +134,9 @@
 
       }
 
-      class App { 
+      class App {
 
-        constructor() { 
+        constructor() {
           this.default_lat = 51.509865
           this.default_lng = -0.118092
           this.default_zoom = 10
@@ -146,26 +146,26 @@
           this.pie = new Pie();
         }
 
-        // listen does initialization, draws the first map, and begins 
+        // listen does initialization, draws the first map, and begins
         // listening to user events (such as map movement).
         listen() {
           this.do(this.default_lat, this.default_lng, this.default_zoom)
 
-          this.map.onMoveStart(() => { 
-            this.pie.destroy(); 
+          this.map.onMoveStart(() => {
+            this.pie.destroy();
           });
 
-          this.map.onMoveEnd(_.debounce((lat, lng, zoom) => { 
+          this.map.onMoveEnd(_.debounce((lat, lng, zoom) => {
             this.do(lat, lng, zoom)
           }, 500));
         }
 
         // do will update all marker, the usage pie, after requesting data
         // from the api.
-        async do(lat, lng, zoom) { 
+        async do(lat, lng, zoom) {
           let data = await this.api.get(lat, lng, zoom)
-          for (let [lat, long, name] of data.markers) { 
-            this.map.addMarker(lat, long, name);
+          for (let [lat, long, name, comment] of data.markers) {
+            this.map.addMarker(lat, long, name + ":<br><br>" + comment);
           }
           this.pie.draw(data.usages);
         }

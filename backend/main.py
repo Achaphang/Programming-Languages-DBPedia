@@ -1,25 +1,26 @@
 import sparql
 from flask import Flask, jsonify, request
-import os 
+import os
 
 # SPARQL getters.
 
-class PLQueries(): 
+class PLQueries():
 
-    def __init__(self): 
+    def __init__(self):
         self.endpoint = "http://dbpedia.org/sparql/"
 
     def businesses(self, lat, lng, range):
         range = 20 - int(range) # Client gives us value from 0-18 (0 is zoomed out, 18 is zoomed in).
 
         query = """
-            select distinct sample(?lat) sample(?lng) str(?name)
+            select distinct sample(?lat) sample(?lng) str(?name) str(?comment)
             where {{
-                ?it rdf:type dbo:Software . 
-                ?it dbo:developer ?dev . 
+                ?it rdf:type dbo:Software .
+                ?it dbo:developer ?dev .
 
-                ?dev dbo:locationCity ?loc . 
+                ?dev dbo:locationCity ?loc .
                 ?dev rdfs:label ?name .
+                ?dev rdfs:comment ?comment .
 
                 ?loc geo:long ?lng .
                 ?loc geo:lat  ?lat .
@@ -31,6 +32,7 @@ class PLQueries():
                 FILTER(?lat <= {lat} + {range})
 
                 FILTER(LANGMATCHES(LANG(?name), "en"))
+                FILTER(LANGMATCHES(LANG(?comment), "en"))
            }}
             order by ?dev
             limit 100
@@ -49,7 +51,7 @@ class PLQueries():
             where {{
                 ?it dbo:developer ?dev .
                 ?it dbo:programmingLanguage ?pl .
-                
+
                 ?pl rdfs:label ?name .
 
                 ?dev dbo:locationCity ?loc .
@@ -72,7 +74,7 @@ class PLQueries():
         rows = [sparql.unpack_row(row) for row in result]
 
         # Five unique colors.
-        colors = [ 
+        colors = [
                 "rgba(209,17,65,0.2)",
                 "rgba(0,177,89,0.2)",
                 "rgba(0,174,219,0.2)",
