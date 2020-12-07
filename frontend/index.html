@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Project Info Here</title>
+    <title>SWOP 2020 Assignment 4</title>
     <link rel="stylesheet" href="//unpkg.com/leaflet@1.4.0/dist/leaflet.css">
     <link rel="icon" type="image/x-icon" href="//favicon.evanjon.es/255/0/0/32/favicon.ico" />
   </head>
@@ -22,8 +22,8 @@
 
         constructor(lat, long, zoom) {
           this.map = L.map('map').setView([lat, long], zoom);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          L.tileLayer('//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           }).addTo(this.map);
           this.markers = [];
         }
@@ -165,7 +165,7 @@
         async do(lat, lng, zoom) {
           let data = await this.api.get(lat, lng, zoom)
           for (let [lat, long, name, comment] of data.markers) {
-            this.map.addMarker(lat, long, name + ": " + comment);
+            this.map.addMarker(lat, long, name + ":<br><br>" + comment);
           }
           this.pie.draw(data.usages);
         }
